@@ -14,7 +14,7 @@ module.exports = {
   entry: path.join(projectRoot, 'server/server.js'),
   output: {
     libraryTarget: 'commonjs2', // !different
-    path: path.join(projectRoot, 'dist'),
+    path: path.join(projectRoot, 'server/out'),
     filename: 'bundle.server.js',
   },
   resolve: {
