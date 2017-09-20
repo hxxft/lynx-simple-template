@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const net = require('net');
 const vueServerRenderer = require('../libs/vue-server-renderer');
 
 const app = express();
@@ -55,8 +56,18 @@ app.get(clientBundleFileUrl, function (req, res) {
   res.send(clientBundleFileCode);
 });
 
+function pushCommand(command) {
+  var HOST = '127.0.0.1'
+  var POST = 8000
+  var socket = new net.Socket()
+  socket.connect(POST, HOST, function() {
+    socket.write(command)
+    socket.end()
+  })
+}
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, function () {
-  console.log(`Example app listening on port ${PORT}!`);
+  pushCommand('reload')
 });
