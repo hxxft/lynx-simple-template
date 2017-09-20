@@ -10,7 +10,7 @@ function resolve (dir) {
 }
 
 module.exports = {
-  entry: path.join(projectRoot, 'server/client.js'),
+  entry: path.join(projectRoot, 'pack/client.js'),
   output: {
     path: path.join(projectRoot, 'out'),
     filename: 'bundle.client.js',

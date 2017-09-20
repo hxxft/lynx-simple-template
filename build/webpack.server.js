@@ -11,10 +11,10 @@ function resolve (dir) {
 
 module.exports = {
   target: 'node', // !different
-  entry: path.join(projectRoot, 'server/server.js'),
+  entry: path.join(projectRoot, 'pack/server.js'),
   output: {
     libraryTarget: 'commonjs2', // !different
-    path: path.join(projectRoot, 'server/out'),
+    path: path.join(projectRoot, 'pack/out'),
     filename: 'bundle.server.js',
   },
   resolve: {
