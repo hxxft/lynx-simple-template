@@ -741,7 +741,6 @@ var isEdge = UA && UA.indexOf('edge/') > 0;
 var isAndroid = UA && UA.indexOf('android') > 0;
 var isIOS = UA && /iphone|ipad|ipod|ios/.test(UA);
 var isChrome = UA && /chrome\/\d+/.test(UA) && !isEdge;
-var isLynx = UA && UA.indexOf('lynx') > -1;
 
 // Firefix has a "watch" function on Object.prototype...
 var nativeWatch = ({}).watch;
@@ -806,6 +805,7 @@ var nextTick = (function () {
     }
   }
 
+  // Lynx Modify
   // the nextTick behavior leverages the microtask queue, which can be accessed
   // via either native Promise.then or MutationObserver.
   // MutationObserver has wider support, however it is seriously bugged in
@@ -823,7 +823,7 @@ var nextTick = (function () {
   //     // microtask queue but the queue isn't being flushed, until the browser
   //     // needs to do some other work, e.g. handle a timer. Therefore we can
   //     // "force" the microtask queue to be flushed by adding an empty timer.
-  //     if (isLynx) setTimeout(noop)
+  //     if (isIOS) setTimeout(noop)
   //   }
   // } else if (typeof MutationObserver !== 'undefined' && (
   //   isNative(MutationObserver) ||
@@ -849,10 +849,9 @@ var nextTick = (function () {
   //     setTimeout(nextTickHandler, 0)
   //   }
   // }
-
   timerFunc = function () {
-      setTimeout(nextTickHandler, 0);
-    };
+    setTimeout(nextTickHandler, 0);
+  };
 
   return function queueNextTick (cb, ctx) {
     var _resolve;
@@ -861,7 +860,6 @@ var nextTick = (function () {
         try {
           cb.call(ctx);
         } catch (e) {
-          console.log('error======>'+JSON.stringify(e));
           handleError(e, ctx, 'nextTick');
         }
       } else if (_resolve) {
@@ -1531,10 +1529,6 @@ var isHTMLTag = makeMap(
   'content,element,shadow,template,blockquote,iframe,tfoot'
 );
 
-var isLynxTag = makeMap(
-  'view,label,listview,scrollview,viewstub'
-);
-
 // this map is intentionally selective, only covering SVG elements that may
 // contain child elements.
 var isSVG = makeMap(
@@ -1544,13 +1538,19 @@ var isSVG = makeMap(
   true
 );
 
+// Lynx Modify
+var isLynxTag = makeMap(
+  'view,label,img,listview,scrollview,viewstub'
+);
+
 var isPreTag = function (tag) { return tag === 'pre'; };
 
 var isReservedTag = function (tag) {
-  return isHTMLTag(tag) || isSVG(tag) || isLynxTag(tag)
+  return isHTMLTag(tag) || isSVG(tag)
 };
 
 function getTagNamespace (tag) {
+  // Lynx Modify
   // if (isSVG(tag)) {
   //   return 'svg'
   // }
@@ -4358,8 +4358,8 @@ function generate (
 }
 
 function genSSRElement (el, state) {
-  console.log('genSSRElement'+ el);
-return genNormalElement(el, state, false)
+  // Lynx Modify
+  return genNormalElement(el, state, false)
   if (el.for && !el.forProcessed) {
     return genFor(el, state, genSSRElement)
   } else if (el.if && !el.ifProcessed) {
@@ -4370,23 +4370,23 @@ return genNormalElement(el, state, false)
       : genSSRChildren(el, state) || 'void 0'
   }
 
-  // switch (el.ssrOptimizability) {
-  //   case optimizability.FULL:
-  //     // stringify whole tree
-  //     return genStringElement(el, state)
-  //   case optimizability.SELF:
-  //     // stringify self and check children
-  //     return genStringElementWithChildren(el, state)
-  //   case optimizability.CHILDREN:
-  //     // generate self as VNode and stringify children
-  //     return genNormalElement(el, state, true)
-  //   case optimizability.PARTIAL:
-  //     // generate self as VNode and check children
-  //     return genNormalElement(el, state, false)
-  //   default:
-  //     // bail whole tree
-  //     return genElement(el, state)
-  // }
+  switch (el.ssrOptimizability) {
+    case optimizability.FULL:
+      // stringify whole tree
+      return genStringElement(el, state)
+    case optimizability.SELF:
+      // stringify self and check children
+      return genStringElementWithChildren(el, state)
+    case optimizability.CHILDREN:
+      // generate self as VNode and stringify children
+      return genNormalElement(el, state, true)
+    case optimizability.PARTIAL:
+      // generate self as VNode and check children
+      return genNormalElement(el, state, false)
+    default:
+      // bail whole tree
+      return genElement(el, state)
+  }
 }
 
 function genNormalElement (el, state, stringifyChildren) {
@@ -4411,6 +4411,15 @@ function genChildrenAsStringNode (el, state) {
   return el.children.length
     ? ("_ssrNode(" + (flattenSegments(childrenToSegments(el, state))) + ")")
     : ''
+}
+
+function genStringElement (el, state) {
+  return ("_ssrNode(" + (elementToString(el, state)) + ")")
+}
+
+function genStringElementWithChildren (el, state) {
+  var children = genSSRChildren(el, state, true);
+  return ("_ssrNode(" + (flattenSegments(elementToOpenTagSegments(el, state))) + ",\"</" + (el.tag) + ">\"" + (children ? ("," + children) : '') + ")")
 }
 
 function elementToString (el, state) {
@@ -6093,10 +6102,8 @@ function renderStringNode (el, context) {
   var write = context.write;
   var next = context.next;
   if (isUndef(el.children) || el.children.length === 0) {
-    console.log('renderStringNode 1===> '+el.open);
     write(el.open + (el.close || ''), next);
   } else {
-    console.log('renderStringNode 2===> '+el.open);
     var children = el.children;
     context.renderStates.push({
       type: 'Element',
