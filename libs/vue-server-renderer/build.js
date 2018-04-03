@@ -173,7 +173,7 @@ var hyphenate = cached(function (str) {
 /**
  * Mix properties into target object.
  */
-function extend$1 (to, _from) {
+function extend (to, _from) {
   for (var key in _from) {
     to[key] = _from[key];
   }
@@ -187,7 +187,7 @@ function toObject (arr) {
   var res = {};
   for (var i = 0; i < arr.length; i++) {
     if (arr[i]) {
-      extend$1(res, arr[i]);
+      extend(res, arr[i]);
     }
   }
   return res
@@ -1354,7 +1354,7 @@ LIFECYCLE_HOOKS.forEach(function (hook) {
 function mergeAssets (parentVal, childVal) {
   var res = Object.create(parentVal || null);
   return childVal
-    ? extend$1(res, childVal)
+    ? extend(res, childVal)
     : res
 }
 
@@ -1376,7 +1376,7 @@ strats.watch = function (parentVal, childVal) {
   if (!childVal) { return Object.create(parentVal || null) }
   if (!parentVal) { return childVal }
   var ret = {};
-  extend$1(ret, parentVal);
+  extend(ret, parentVal);
   for (var key in childVal) {
     var parent = ret[key];
     var child = childVal[key];
@@ -1399,8 +1399,8 @@ strats.inject =
 strats.computed = function (parentVal, childVal) {
   if (!parentVal) { return childVal }
   var ret = Object.create(null);
-  extend$1(ret, parentVal);
-  if (childVal) { extend$1(ret, childVal); }
+  extend(ret, parentVal);
+  if (childVal) { extend(ret, childVal); }
   return ret
 };
 strats.provide = mergeDataOrFn;
@@ -1540,13 +1540,14 @@ var isSVG = makeMap(
 
 // Lynx Modify
 var isLynxTag = makeMap(
-  'view,label,img,listview,scrollview,viewstub'
+  'view,label,img,listview,scrollview,viewstub, canvas'
 );
 
 var isPreTag = function (tag) { return tag === 'pre'; };
 
 var isReservedTag = function (tag) {
-  return isHTMLTag(tag) || isSVG(tag)
+  //return isHTMLTag(tag) || isSVG(tag)
+  return isLynxTag(tag)
 };
 
 function getTagNamespace (tag) {
@@ -1591,16 +1592,6 @@ var parseStyleText = cached(function (cssText) {
   return res
 });
 
-// merge static and dynamic style data on the same vnode
-function normalizeStyleData (data) {
-  var style = normalizeStyleBinding(data.style);
-  // static style is pre-processed into an object during compilation
-  // and is always a fresh object, so it's safe to merge into it
-  return data.staticStyle
-    ? extend$1(data.staticStyle, style)
-    : style
-}
-
 // normalize possible array / string values into Object
 function normalizeStyleBinding (bindingStyle) {
   if (Array.isArray(bindingStyle)) {
@@ -1616,56 +1607,31 @@ function normalizeStyleBinding (bindingStyle) {
  * parent component style should be after child's
  * so that parent component's style could override it
  */
-function getStyle (vnode, checkChild) {
-  var res = {};
-  var styleData;
-
-  if (checkChild) {
-    var childNode = vnode;
-    while (childNode.componentInstance) {
-      childNode = childNode.componentInstance._vnode;
-      if (childNode.data && (styleData = normalizeStyleData(childNode.data))) {
-        extend$1(res, styleData);
-      }
-    }
-  }
-
-  if ((styleData = normalizeStyleData(vnode.data))) {
-    extend$1(res, styleData);
-  }
-
-  var parentNode = vnode;
-  while ((parentNode = parentNode.parent)) {
-    if (parentNode.data && (styleData = normalizeStyleData(parentNode.data))) {
-      extend$1(res, styleData);
-    }
-  }
-  return res
-}
 
 /*  */
 
 function genStyle (style) {
   var styleText = '';
-  for (var key in style) {
-    var value = style[key];
-    var hyphenatedKey = hyphenate(key);
-    if (Array.isArray(value)) {
-      for (var i = 0, len = value.length; i < len; i++) {
-        styleText += hyphenatedKey + ":" + (value[i]) + ";";
-      }
-    } else {
-      styleText += hyphenatedKey + ":" + value + ";";
-    }
-  }
+  // for (const key in style) {
+  //   const value = style[key]
+  //   const hyphenatedKey = hyphenate(key)
+  //   if (Array.isArray(value)) {
+  //     for (let i = 0, len = value.length; i < len; i++) {
+  //       styleText += `${hyphenatedKey}:${value[i]};`
+  //     }
+  //   } else {
+  //     styleText += `${hyphenatedKey}:${value};`
+  //   }
+  // }
   return styleText
 }
 
 function renderStyle (vnode) {
-  var styleText = genStyle(getStyle(vnode, false));
-  if (styleText !== '') {
-    return (" style=" + (JSON.stringify(cachedEscape(styleText))))
-  }
+  // const styleText = genStyle(getStyle(vnode, false))
+  // if (styleText !== '') {
+  //   return ` style=${JSON.stringify(cachedEscape(styleText))}`
+  // }
+  return ''
 }
 
 var modules = [
@@ -3672,7 +3638,7 @@ var CodegenState = function CodegenState (options) {
   this.warn = options.warn || baseWarn;
   this.transforms = pluckModuleFunction(options.modules, 'transformCode');
   this.dataGenFns = pluckModuleFunction(options.modules, 'genData');
-  this.directives = extend$1(extend$1({}, baseDirectives$1), options.directives);
+  this.directives = extend(extend({}, baseDirectives$1), options.directives);
   var isReservedTag = options.isReservedTag || no;
   this.maybeComponent = function (el) { return !isReservedTag(el.tag); };
   this.onceId = 0;
@@ -4775,7 +4741,7 @@ function createCompilerCreator (baseCompile) {
         }
         // merge custom directives
         if (options.directives) {
-          finalOptions.directives = extend$1(
+          finalOptions.directives = extend(
             Object.create(baseOptions.directives),
             options.directives
           );
@@ -5009,9 +4975,9 @@ function renderSSRStyle (
   extra
 ) {
   var style = {};
-  if (staticStyle) { extend$1(style, staticStyle); }
-  if (dynamic) { extend$1(style, normalizeStyleBinding(dynamic)); }
-  if (extra) { extend$1(style, extra); }
+  if (staticStyle) { extend(style, staticStyle); }
+  if (dynamic) { extend(style, normalizeStyleBinding(dynamic)); }
+  if (extra) { extend(style, extra); }
   var res = genStyle(style);
   return res === '' ? res : (" style=" + (JSON.stringify(cachedEscape(res))))
 }
@@ -5087,7 +5053,7 @@ function getStaticStyles (oldVnode, vnode) {
       if (cls === '') { return }
 
       if (styleSheet[cls]) {
-        style = extend$1(style || {}, styleSheet[cls]);
+        style = extend(style || {}, styleSheet[cls]);
       }
     });
   }
@@ -5095,7 +5061,7 @@ function getStaticStyles (oldVnode, vnode) {
   // extend static style styles
   if (vnode.data && vnode.data.staticStyle) {
     var cssMap = styleValueToCssMap(vnode.data.staticStyle);
-    style = extend$1(style || {}, cssMap);
+    style = extend(style || {}, cssMap);
   }
 
   if(!style)
@@ -5111,7 +5077,7 @@ function getStaticStyles (oldVnode, vnode) {
   // clone the style for future updates,
   // in case the user mutates the style object in-place.
   if (style) {
-    vnode.data.baseStyle = extend$1({}, style);
+    vnode.data.baseStyle = extend({}, style);
   }
 
   return preStyles;
@@ -5155,7 +5121,7 @@ function getUpdateStyles (oldVnode, vnode) {
     // [style1,style2] style1:{color:'#ff3355'},style2:{fontSize:80}
     if (Array.isArray(attrs.style)) {
       for (var i = 0; i < attrs.style.length; i++) {
-        bindStyle = extend$1(bindStyle, attrs.style[i]);
+        bindStyle = extend(bindStyle, attrs.style[i]);
       }
     } else if (typeof attrs.style === 'object') {
       // {color:'#ff3355',fontSize:80}
@@ -5165,7 +5131,7 @@ function getUpdateStyles (oldVnode, vnode) {
     if (Array.isArray(attrs.class)) {
       for (var i$1 = 0; i$1 < attrs.class.length; i$1++) {
         var klass = attrs.class[i$1];
-        bindClassStyle = extend$1(bindClassStyle, styleMap[klass]);
+        bindClassStyle = extend(bindClassStyle, styleMap[klass]);
       }
     } else if (typeof attrs.class === 'object') {
       // {class1:true|false,class2:true|false}
@@ -5173,7 +5139,7 @@ function getUpdateStyles (oldVnode, vnode) {
       var falsebindStyle = {};
       for (var klass$1 in attrs.class) {
         if (attrs.class[klass$1]) {
-          truebindStyle = extend$1(truebindStyle, styleMap[klass$1]);
+          truebindStyle = extend(truebindStyle, styleMap[klass$1]);
         } else {
           // class[klass] is false
           var tmpFalsebindStyle = {};
@@ -5184,17 +5150,17 @@ function getUpdateStyles (oldVnode, vnode) {
               tmpFalsebindStyle[styleKey] = '';
             }
           }
-          falsebindStyle = extend$1(falsebindStyle, tmpFalsebindStyle);
+          falsebindStyle = extend(falsebindStyle, tmpFalsebindStyle);
         }
       }
-      bindClassStyle = extend$1(bindClassStyle, falsebindStyle);
-      bindClassStyle = extend$1(bindClassStyle, truebindStyle);
+      bindClassStyle = extend(bindClassStyle, falsebindStyle);
+      bindClassStyle = extend(bindClassStyle, truebindStyle);
     }
   }
 
   // clone the style for future updates,
   // in case the user mutates the style object in-place.
-  var curStyles = extend$1(bindClassStyle, bindStyle);
+  var curStyles = extend(bindClassStyle, bindStyle);
   var normalizedCurStyles = {};
   if (!isEmptyObject(curStyles)) {
     for (var key in curStyles) {
@@ -5204,10 +5170,10 @@ function getUpdateStyles (oldVnode, vnode) {
   }
 
   if (baseStyle) {
-    vnode.data.baseStyle = extend$1({}, baseStyle);
+    vnode.data.baseStyle = extend({}, baseStyle);
   }
 
-  preStyles = extend$1(preStyles, normalizedCurStyles);
+  preStyles = extend(preStyles, normalizedCurStyles);
 
   return preStyles
 }
@@ -5229,8 +5195,9 @@ function transforCssNum2RulerNum (cssValue) {
 function getStyleString (vnode) {
 
   var preStyles = getStaticStyles(null, vnode);
-  preStyles = extend$1(preStyles, getUpdateStyles(null, vnode));
-
+  preStyles = extend(preStyles, getUpdateStyles(null, vnode));
+  if(vnode.data.parentStaticStyle)
+    { preStyles = extend(preStyles, vnode.data.parentStaticStyle); }
   if (Object.keys(preStyles) && Object.keys(preStyles).length > 0) {
     var preStylesString = '';
     // camelized css node
@@ -6075,20 +6042,16 @@ function renderComponentInner (node, isRoot, context) {
   var styleSheet = node.context.$data && node.context.$data.style;
   var style = {};
   if (node.data && node.data.staticClass) {
-    if (childNode.data) {
-      if (!childNode.data.staticClass) {
-        var classNames = node.data.staticClass.split(' ');
-        if (styleSheet) {
-          classNames.forEach(function (cls) {
-            style = extend(style, styleSheet[cls]);
-          });
-        }
-      }
+    if (styleSheet) {
+      var classNames = node.data.staticClass.split(' '); 
+      classNames.forEach(function (cls) {
+        style = extend(style, styleSheet[cls]);
+      });
     }
   }
 
   if (Object.keys(style).length > 0) {
-    childNode.data.staticStyle = style;
+    childNode.data.parentStaticStyle = style;
   }
 
   context.renderStates.push({
@@ -6228,7 +6191,7 @@ function renderStartingTag (node, context) {
 
   // 渲染样式
   markup += getStyleString(node);
-
+   
   // attach scoped CSS ID
   // let scopeId
   // const activeInstance = context.activeInstance

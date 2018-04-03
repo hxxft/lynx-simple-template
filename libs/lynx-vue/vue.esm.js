@@ -1,6 +1,6 @@
 /*!
  * Vue.js v2.4.2
- * (c) 2014-2017 Evan You
+ * (c) 2014-2018 Evan You
  * Released under the MIT License.
  */
 /*  */
@@ -4816,13 +4816,14 @@ var isSVG = makeMap(
 
 // Lynx Modify
 var isLynxTag = makeMap(
-  'view,label,img,listview,scrollview,viewstub'
+  'view,label,img,listview,scrollview,viewstub, canvas'
 );
 
 var isPreTag = function (tag) { return tag === 'pre'; };
 
 var isReservedTag = function (tag) {
-  return isHTMLTag(tag) || isSVG(tag)
+  //return isHTMLTag(tag) || isSVG(tag)
+  return isLynxTag(tag)
 };
 
 function getTagNamespace (tag) {
