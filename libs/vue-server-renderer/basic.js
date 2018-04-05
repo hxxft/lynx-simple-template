@@ -5443,8 +5443,7 @@ function transforCssNum2RulerNum (cssValue) {
   var rulerNum = cssValue;
 
   if (typeof cssValue === 'number') {
-    // 对于不带单位的情况，用rpx进行标志
-    rulerNum = cssValue + 'rpx';
+    rulerNum = cssValue;
   } else if (cssValue === 'pixel') {
     rulerNum = 'pixel';  // 客户端自己去转换pixel
   } else if (typeof cssValue === 'string' && cssValue.match(/^[-+]?[0-9]*\.?[0-9]+px$/)) {
@@ -5457,7 +5456,7 @@ function getStyleString (vnode) {
 
   var preStyles = getStaticStyles(null, vnode);
   preStyles = extend(preStyles, getUpdateStyles(null, vnode));
-  if(vnode.data.parentStaticStyle)
+  if(vnode.data && vnode.data.parentStaticStyle)
     { preStyles = extend(preStyles, vnode.data.parentStaticStyle); }
   if (Object.keys(preStyles) && Object.keys(preStyles).length > 0) {
     var preStylesString = '';
